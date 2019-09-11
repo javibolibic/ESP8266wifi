@@ -1,5 +1,5 @@
 //
-//  ESP8266wifi.h
+//  SerialESP8266wifi.h
 //
 //
 //  Created by Jonas Ekstrand on 2015-02-20.
@@ -7,8 +7,8 @@
 //
 //
 
-#ifndef ESP8266wifi_h
-#define ESP8266wifi_h
+#ifndef SerialESP8266wifi_h
+#define SerialESP8266wifi_h
 
 #define HW_RESET_RETRIES 3
 #define SERVER_CONNECT_RETRIES_BEFORE_HW_RESET 3
@@ -20,7 +20,13 @@
 #endif
 
 #include <inttypes.h>
+
+#if defined(SerialESP8266)
+#include <pgmspace.h>
+#else
 #include <avr/pgmspace.h>
+#endif
+
 #include "HardwareSerial.h"
 
 #define SERVER '4'
@@ -57,20 +63,20 @@ struct Flags   // 1 byte value (on a system where 8 bits is a byte
          connectToServerUsingTCP:1;
 };
 
-class ESP8266wifi
+class SerialESP8266wifi
 {
     
 public:
     /*
      * Will pull resetPin low then high to reset esp8266, connect this pin to CHPD pin
      */
-    ESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin);
+    SerialESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin);
     
     
     /*
      * Will pull resetPin low then high to reset esp8266, connect this pin to CHPD pin
      */
-    ESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin, Stream &dbgSerial);
+    SerialESP8266wifi(Stream &serialIn, Stream &serialOut, byte resetPin, Stream &dbgSerial);
     
     /*
      * Will do hw reset and set inital configuration, will try this HW_RESET_RETRIES times.
@@ -88,6 +94,12 @@ public:
     bool isConnectedToAP();
     char* getIP();
     char* getMAC();
+    
+    /*
+     * Evaluate the connection and perform reconnects if needed. Eventually perform reset and restart.
+     *
+     */
+    bool watchdog();
     
     /*
      * Connecting with TCP to server
@@ -160,7 +172,7 @@ private:
     bool restart();
     
     byte serverRetries;
-    bool watchdog();
+    
     
     char msgOut[MSG_BUFFER_MAX];//buffer for send method
     char msgIn[MSG_BUFFER_MAX]; //buffer for listen method = limit of incoming message..
@@ -170,7 +182,6 @@ private:
     //byte readCommand(const char* text1, const char* text2);
     byte readBuffer(char* buf, byte count, char delim = '\0');
     char readChar();
-
     Stream* _dbgSerial;
 };
 
